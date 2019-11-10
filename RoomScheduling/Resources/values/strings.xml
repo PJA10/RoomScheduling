@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RoomScheduling</string>
+    <string name="action_settings">Settings</string>
+    <string name="room_prompt">Choose a Room</string>
+    <string-array name="room_array">
+    <item>201</item>
+    <item>202</item>
+    <item>203</item>
+    <item>204</item>
+    <item>205</item>
+    <item>auditorium</item>
+    </string-array>
+</resources>

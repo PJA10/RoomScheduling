@@ -1,0 +1,90 @@
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minWidth="25px"
+    android:minHeight="25px"
+    android:id="@+id/relativeLayout1">
+    <TextView
+        android:text="הזמנות קיימות"
+        android:layout_width="369.0dp"
+        android:layout_height="27.0dp"
+        android:id="@+id/textView1"
+        android:textSize="20dp"/>
+    <ListView
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="289.5dp"
+        android:id="@+id/roomUsersLV" />
+    <TextView
+        android:text=":הזמנת חדר"
+        android:layout_width="369.0dp"
+        android:layout_height="27.0dp"
+        android:id="@+id/textView2"
+        android:textStyle="bold"
+        android:textSize="20dp" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="40.0dp"
+        android:id="@+id/linearLayout1">
+        <TextView
+            android:text="שם (אנגלית):"
+            android:layout_width="84.0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/textView3" />
+        <EditText
+            android:inputType="text|textPersonName"
+            android:layout_width="195.0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/NameInput" />
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="40.0dp"
+        android:id="@+id/linearLayout1">
+        <TextView
+            android:text="משעה:"
+            android:layout_width="44.0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/textView5" />
+        <Button
+            android:text="בחר זמן"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/StartTimeInput" />
+        <android.support.v4.widget.Space
+            android:layout_width="18.0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/space1" />
+        <TextView
+            android:text="עד:"
+            android:layout_width="30.5dp"
+            android:layout_height="match_parent"
+            android:id="@+id/textView6" />
+        <Button
+            android:text="בחר זמן"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/EndTimeInput" />
+    </LinearLayout>
+    <android.support.v4.widget.Space
+        android:layout_width="match_parent"
+        android:layout_height="29.5dp"
+        android:id="@+id/space2" />
+    <Button
+        android:text="הזמן"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/submit" />
+</LinearLayout>
