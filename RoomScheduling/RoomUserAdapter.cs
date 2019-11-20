@@ -52,7 +52,7 @@ namespace RoomScheduling
 
         {
 
-            Android.Views.LayoutInflater layoutInflater = ((MainActivity)context).LayoutInflater;
+            Android.Views.LayoutInflater layoutInflater = ((RoomActivity)context).LayoutInflater;
 
             Android.Views.View view = layoutInflater.Inflate(Resource.Layout.RoomUserListItem, parent, false);
 
@@ -64,8 +64,8 @@ namespace RoomScheduling
             if (temp != null)
             {
                 nameTextView.Text = temp.userName;
-                startTimeTV.Text = temp.startTime.ToString();
-                endTimeTV.Text = temp.endTime.ToString();
+                startTimeTV.Text = temp.startTime.ToShortTimeString();
+                endTimeTV.Text = temp.endTime.ToShortTimeString();
             }
             return view;
 

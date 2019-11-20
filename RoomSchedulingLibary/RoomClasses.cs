@@ -17,16 +17,18 @@ public class RoomClasses
         [PrimaryKey, AutoIncrement, Column("_id")]
 
         public int Id { get; set; }
-        public DateTime startTime;
-        public DateTime endTime;
-        public string userName;
+        public int roomId { get; set; }
+        public DateTime startTime { get; set; }
+        public DateTime endTime { get; set; }
+        public string userName { get; set; }
 
         public RoomUser() { }
-        public RoomUser(string userName, DateTime startTime, DateTime endTime)
+        public RoomUser(int roomId, string userName, DateTime startTime, DateTime endTime)
         {
             this.userName = userName;
             this.startTime = startTime;
             this.endTime = endTime;
+            this.roomId = roomId;
         }
 
         public static bool isValidUserData(string userName, DateTime startTime, DateTime endTime)
@@ -50,6 +52,10 @@ public class RoomClasses
         public bool Equals(RoomUser other) 
         {
             if (userName.CompareTo(other.userName) != 0)
+            {
+                return false;
+            }
+            if (roomId.CompareTo(other.roomId) != 0)
             {
                 return false;
             }

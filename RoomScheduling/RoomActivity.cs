@@ -13,11 +13,13 @@ using Android.Widget;
 using Android.Views.InputMethods;
 using System.Timers;
 using static RoomClasses;
+using Android.Support.V7.App;
+using System.Threading.Tasks;
 
 namespace RoomScheduling
 {
     [Activity(Label = "RoomActivity")]
-    class RoomActivity : Activity
+    class RoomActivity : AppCompatActivity
     {
         List<RoomUser> usersList;
         Button StartTimeInput;
@@ -26,73 +28,88 @@ namespace RoomScheduling
         EditText NameInput;
         int pos = -1;
         Timer myTimer;
-        Socket sender;
+        Socket sender = null;
         RoomUserAdapter roomUserAdapter = null;
         ListView roomUsersLV;
-        protected override void OnCreate(Bundle savedInstanceState)
+        int roomId;
+        ProgressDialog loadingDialog;
+
+
+        async protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
             // Create your application here
             SetContentView(Resource.Layout.room_main);
 
-            GET_users();
-            roomUserAdapter = new RoomUserAdapter(this, usersList);
-            roomUsersLV = FindViewById<ListView>(Resource.Id.roomUsersLV);
-            roomUsersLV.Adapter = roomUserAdapter;
+            showLoadingScreen();
+            await Task.Run(() => RunOnUiThread(() =>
+            {
+                pos = Intent.GetIntExtra("pos", -1);
+                roomId = MainActivity.roomList[pos].Id;
 
-            StartTimeInput = FindViewById<Button>(Resource.Id.StartTimeInput);
-            EndTimeInput = FindViewById<Button>(Resource.Id.EndTimeInput);
-            StartTimeInput.Click += TimeSelectOnClick;
-            EndTimeInput.Click += TimeSelectOnClick;
+                MainActivity.connectToServer(ref sender, MainActivity.IP, MainActivity.port);
+                GET_users();
+                roomUserAdapter = new RoomUserAdapter(this, usersList);
+                roomUsersLV = FindViewById<ListView>(Resource.Id.roomUsersLV);
+                roomUsersLV.Adapter = roomUserAdapter;
 
-            NameInput = FindViewById<EditText>(Resource.Id.NameInput);
+                StartTimeInput = FindViewById<Button>(Resource.Id.StartTimeInput);
+                EndTimeInput = FindViewById<Button>(Resource.Id.EndTimeInput);
+                StartTimeInput.Click += TimeSelectOnClick;
+                EndTimeInput.Click += TimeSelectOnClick;
 
-            
-            submit = FindViewById<Button>(Resource.Id.submit);
-            submit.Click += submitAction;
+                NameInput = FindViewById<EditText>(Resource.Id.NameInput);
 
-            pos = Intent.GetIntExtra("pos", -1);
 
-            myTimer = new Timer();
-            myTimer.Elapsed += new ElapsedEventHandler(TimeUp);
-            myTimer.Interval = 5000;
-            myTimer.Start();
+                submit = FindViewById<Button>(Resource.Id.submit);
+                submit.Click += submitAction;
 
-            sender = MainActivity.sender;
-
+                myTimer = new Timer();
+                myTimer.Elapsed += new ElapsedEventHandler(TimeUp);
+                myTimer.Interval = 10000;
+                myTimer.Start();
+            }));
+            loadingDialog.Hide();
+            loadingDialog.Dismiss();
         }
 
-        private void submitAction(object sender, EventArgs e)
+        private void showLoadingScreen()
         {
+            loadingDialog = ProgressDialog.Show(this, "just a sec", "Loading please wait...", true);
+            loadingDialog.SetCancelable(true);
+            loadingDialog.SetProgressStyle(ProgressDialogStyle.Horizontal);
 
+            loadingDialog.SetMessage("Loading...");
+
+            loadingDialog.Show();
+        }
+
+        async private void submitAction(object sender, EventArgs e)
+        {
             String UserName = NameInput.Text;
             String RoomName = MainActivity.roomList[pos].roomName;
-            IPAddress ipAddr = IPAddress.Parse(MainActivity.IP);
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddr, MainActivity.port);
-
-            // Creation TCP/IP Socket using 
-            // Socket Class Costructor 
-            Socket secondSender = new Socket(ipAddr.AddressFamily,
-                    SocketType.Stream, ProtocolType.Tcp);
+            Socket secondSender = null;
+            MainActivity.connectToServer(ref secondSender, MainActivity.IP, MainActivity.port);
 
             try
             {
 
                 // Connect Socket to the remote 
                 // endpoint using method Connect() 
-                secondSender.Connect(localEndPoint);
-                MainActivity.sendString(secondSender, String.Format("Request {0} \"{1}\" {2} {3}", pos, UserName, StartTimeInput.Text, EndTimeInput.Text));
+                MainActivity.sendString(secondSender, String.Format("Request {0} \"{1}\" {2} {3}", roomId, UserName, StartTimeInput.Text, EndTimeInput.Text));
                 String recvedString = MainActivity.recvString(secondSender);
                 string toast = string.Format(recvedString);
                 Toast.MakeText(this, toast, ToastLength.Long).Show();
                 MainActivity.close_conn(secondSender);
+                GET_users();
 
             }
             catch (Exception error)
             {
                 Toast.MakeText(this, error.ToString(), ToastLength.Long).Show(); 
             }
+
 
         }
 
@@ -121,20 +138,31 @@ namespace RoomScheduling
         private void GET_users()
         {
 
-            List<RoomUser> recevedRoomUserslist = (List<RoomUser>)MainActivity.GET("GET " + pos.ToString() + "<EOF>");
-            if (!Enumerable.SequenceEqual(usersList, recevedRoomUserslist))
+            List<RoomUser> recevedRoomUserslist = (List<RoomUser>)MainActivity.GET(sender, "GET " + roomId.ToString() + "<EOF>");
+            if (usersList != null)
             {
-                usersList = recevedRoomUserslist;
-                if (roomUserAdapter != null)
+                if (!Enumerable.SequenceEqual(usersList, recevedRoomUserslist))
                 {
+                    foreach (RoomUser curr_user in recevedRoomUserslist)
+                    {
+                        if (!usersList.Contains(curr_user))
+                        {
+                            usersList.Add(curr_user);
+                        }
+                    }
                     roomUserAdapter.updated();
                 }
+                
+            }
+            else
+            {
+                usersList = recevedRoomUserslist;
             }
         }
         protected override void OnStop()
         {
-            MainActivity.close_conn(sender);
             myTimer.Stop();
+            MainActivity.close_conn(sender);
             base.OnStop();
         }
     }

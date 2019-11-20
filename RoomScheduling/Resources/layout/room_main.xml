@@ -87,4 +87,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/submit" />
+    <android.support.v4.widget.ContentLoadingProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="34.0dp"
+        android:id="@+id/contentLoadingProgressBar1" />
 </LinearLayout>
