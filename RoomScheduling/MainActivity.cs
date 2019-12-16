@@ -5,7 +5,7 @@ using Android.Runtime;
 using Android.Widget;
 using Android.Util;
 using System;
-using static RoomClasses;
+using RoomClasses;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
@@ -19,16 +19,18 @@ using System.Collections.Generic;
 
 namespace RoomScheduling
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ScreenOrientation = ScreenOrientation.Portrait)]
+    [Activity(Theme = "@style/AppTheme")]
     public class MainActivity : Activity, ListView.IOnItemClickListener
     {
         public static List<Room> roomList { get; set; }
         //Room[] roomList = new Room[] { new Room("201"), new Room("202"), new Room("203"), new Room("204"), new Room("204"), new Room("auditorium") };
-        public static string IP = "3.19.114.185";// http://:/
-        public static int port = 14578;
+        public static string IP = "46.117.179.180";//"46.117.179.180";
+        public static int port = 11111;//11111;
         ListView RoomsAvailable;
         static public Socket sender;
         RoomAdapter roomAdapter;
+        public static string appUserName;
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -36,10 +38,10 @@ namespace RoomScheduling
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.activity_main);
 
-            
+            appUserName = Intent.GetStringExtra("appUser-userName");
 
             connectToServer(ref sender, IP, port);
-            GET_rooms();
+            roomList = GET_rooms(sender);
 
             roomAdapter = new RoomAdapter(this, roomList);
             RoomsAvailable = FindViewById<ListView>(Resource.Id.roomsLV);
@@ -48,7 +50,7 @@ namespace RoomScheduling
 
             RoomsAvailable.OnItemClickListener = this;
 
-
+            close_conn(sender);
         }
 
         public void OnItemClick(AdapterView parent, Android.Views.View view, int position, long id)
@@ -144,6 +146,15 @@ namespace RoomScheduling
             socket.Shutdown(SocketShutdown.Both);
             socket.Close();
         }
+        public static void showLoadingScreen(Activity activity, ref ProgressDialog loadingDialog)
+        {
+            loadingDialog = ProgressDialog.Show(activity, "just a sec", "Loading please wait...", true);
+            loadingDialog.SetCancelable(true);
+            loadingDialog.SetProgressStyle(ProgressDialogStyle.Horizontal);
+
+            loadingDialog.SetMessage("Loading...");
+            loadingDialog.Show();
+        }
 
         public static void sendString(Socket socket, String toSend)
         {
@@ -154,22 +165,17 @@ namespace RoomScheduling
         public static String recvString(Socket socket)
         {
             byte[] messageReceived = new byte[1024];
-
-            int byteRecv = socket.Receive(messageReceived);
-            String recvedString = Encoding.ASCII.GetString(messageReceived, 0, byteRecv);
+            int msgLength = receiveFromServer(socket, messageReceived);
+            String recvedString = Encoding.ASCII.GetString(messageReceived, 0, msgLength);
             return recvedString;
         }
 
-        public static object GET(Socket sender, String send_msg)
+        public static int receiveFromServer(Socket sender, byte[] messageReceived)
         {
-            sendString(sender, send_msg);
-
-            // Data buffer 
-            byte[] messageReceived = new byte[1024 * 2];
             int byteRecv = sender.Receive(messageReceived);
             byte[] msgLengthBytes = new byte[15];
-            System.Buffer.BlockCopy(messageReceived, 0, msgLengthBytes, 0, msgLengthBytes.Length);
-            System.Buffer.BlockCopy(messageReceived, 15, messageReceived, 0, messageReceived.Length - 15);
+            Buffer.BlockCopy(messageReceived, 0, msgLengthBytes, 0, msgLengthBytes.Length);
+            Buffer.BlockCopy(messageReceived, 15, messageReceived, 0, messageReceived.Length - 15);
 
             Array.Reverse(msgLengthBytes);
             int msgLength = BitConverter.ToInt32(msgLengthBytes, 0);
@@ -180,25 +186,23 @@ namespace RoomScheduling
                 byteRecv = sender.Receive(messageReceived, byteRecv, msgLength - byteRecv - 15, SocketFlags.None);
                 totalbyte += byteRecv;
             }
-            return (ByteArrayToObject(messageReceived));
+            return msgLength;
         }
 
-        private void GET_rooms()
+        public static object GET(Socket sender, String send_msg)
+        {
+            sendString(sender, send_msg);
+
+            // Data buffer 
+            byte[] messageReceived = new byte[2 * 1024];
+            receiveFromServer(sender, messageReceived);
+            return (helperClass.ByteArrayToObject(messageReceived));
+        }
+
+        public static List<Room> GET_rooms(Socket socket)
         {
             
-            List<Room> recevedRoomlist = (List<Room>)GET(sender, "GET rooms");
-            if (roomList != null)
-            {
-                if (!Enumerable.SequenceEqual(roomList, recevedRoomlist))
-                {
-                    roomList = recevedRoomlist;
-                    roomAdapter.updated();
-                }
-            }
-            else
-            {
-                roomList = recevedRoomlist;
-            }
+            return (List<Room>)GET(socket, "GET rooms");
         }
     }
 }

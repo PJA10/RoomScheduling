@@ -8,26 +8,51 @@
     android:minHeight="25px">
     <TextView
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="43.5dp"
         android:padding="10dp"
         android:id="@+id/name"
         android:textSize="16sp"
-        android:text="dada" >
+        android:text="dada"
+        android:textStyle="bold" >
     </TextView>
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:padding="10dp"
-        android:id="@+id/stTV" 
-        android:textSize="16sp"
-        android:text="" >
-    </TextView>
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:padding="10dp"
-        android:id="@+id/etTV"
-        android:textSize="16sp"
-        android:text="" >
-    </TextView>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="67.5dp"
+        android:id="@+id/linearLayout1">
+        <TextView
+            android:layout_width="80.0dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:id="@+id/stTV"
+            android:textSize="16sp"
+            android:text="" >
+        </TextView>
+        <TextView
+            android:text="-"
+            android:layout_width="wrap_content"
+            android:layout_height="49.0dp"
+            android:textSize="16sp"
+            android:id="@+id/textView1" />
+        <TextView
+            android:layout_width="91.0dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:id="@+id/etTV"
+            android:textSize="16sp"
+            android:text="" >
+        </TextView>
+        <Button
+            android:text="התקשר"
+            android:layout_width="76.0dp"
+            android:layout_height="38dp"
+            android:id="@+id/callBtn" />
+        <Button
+            android:text="מחק"
+            android:layout_width="76.0dp"
+            android:layout_height="38dp"
+            android:id="@+id/deleteBtn" />
+    </LinearLayout>
 </LinearLayout>

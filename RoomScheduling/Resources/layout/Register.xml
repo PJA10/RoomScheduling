@@ -1,0 +1,118 @@
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#99F1E5"
+    android:orientation="vertical"
+    android:minWidth="25px"
+    android:minHeight="25px">
+
+    <ScrollView
+        Orientation="Vertical"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/ScrollView1">
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_margin="20dp"
+            android:orientation="vertical"
+            android:id="@+id/linearLayout2">
+
+            <EditText
+                android:id="@+id/userName"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="user name"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:id="@+id/password"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="password"
+                android:inputType="textPassword"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:id="@+id/repeatPassword"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="repeat password "
+                android:inputType="textPassword"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:id="@+id/firstName"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="first name"
+                android:inputType="textPersonName"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:id="@+id/familyName"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="family name"
+                android:inputType="textPersonName"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:id="@+id/email"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:hint="email"
+                android:inputType="textEmailAddress"
+                android:background="@android:color/white" />
+
+            <EditText
+                android:hint="phone number"
+                android:id="@+id/phoneNumber"
+                android:layout_width="fill_parent"
+                android:layout_height="45dp"
+                android:padding="5dp"
+                android:layout_marginTop="20dp"
+                android:inputType="phone"
+                android:background="@android:color/white"/>
+
+            <Button
+                android:id="@+id/createAccount"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/phoneNumber"
+                android:layout_marginTop="25dp"
+                android:background="#97A2A1"
+                android:text="create Account"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/backToLogin"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/createAccount"
+                android:layout_marginTop="25dp"
+                android:layout_marginBottom="15dp"
+                android:background="#97A2A1"
+                android:text="back to login"
+                android:textColor="@android:color/white" />
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

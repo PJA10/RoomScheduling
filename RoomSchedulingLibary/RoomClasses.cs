@@ -7,8 +7,10 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
 using SQLite;
+using Newtonsoft.Json;
 
-public class RoomClasses
+
+namespace RoomClasses
 {
     [Table("RoomUsers")]
     [Serializable]
@@ -21,14 +23,17 @@ public class RoomClasses
         public DateTime startTime { get; set; }
         public DateTime endTime { get; set; }
         public string userName { get; set; }
+        public string phoneNumber { get; set; }
+        
 
         public RoomUser() { }
-        public RoomUser(int roomId, string userName, DateTime startTime, DateTime endTime)
+        public RoomUser(int roomId, string userName, DateTime startTime, DateTime endTime, string phoneNumber)
         {
             this.userName = userName;
             this.startTime = startTime;
             this.endTime = endTime;
             this.roomId = roomId;
+            this.phoneNumber = phoneNumber;
         }
 
         public static bool isValidUserData(string userName, DateTime startTime, DateTime endTime)
@@ -67,6 +72,10 @@ public class RoomClasses
             {
                 return false;
             }
+            if (phoneNumber.CompareTo(other.phoneNumber) != 0)
+            {
+                return false;
+            }
             return true;
         }
         public override bool Equals(object other)
@@ -85,7 +94,9 @@ public class RoomClasses
     public class Room
     {
         [PrimaryKey, AutoIncrement, Column("_id")]
+        //[JsonProperty("Id")]
         public int Id { get; set; }
+        //[JsonProperty("roomName")]
         public string roomName { get; set; }
 
         public Room()
@@ -116,28 +127,35 @@ public class RoomClasses
         }
         public override int GetHashCode() => (roomName).GetHashCode();
     }
-    public static byte[] ObjectToByteArray(Object obj)
+    public static class helperClass
     {
-        if (obj == null)
-            return null;
+        public static byte[] ObjectToByteArray(Object obj)
+        {
+            if (obj == null)
+                return null;
 
-        BinaryFormatter bf = new BinaryFormatter();
-        MemoryStream ms = new MemoryStream();
-        bf.Serialize(ms, obj);
+            BinaryFormatter bf = new BinaryFormatter();
+            MemoryStream ms = new MemoryStream();
+            bf.Serialize(ms, obj);
 
-        return ms.ToArray();
-    }
+            return ms.ToArray();
+        }
 
-    // Convert a byte array to an Object
-    public static Object ByteArrayToObject(byte[] arrBytes)
-    {
-        MemoryStream memStream = new MemoryStream();
-        BinaryFormatter binForm = new BinaryFormatter();
-        memStream.Write(arrBytes, 0, arrBytes.Length);
-        memStream.Seek(0, SeekOrigin.Begin);
-        Object obj2 = binForm.Deserialize(memStream);
-        Object obj = (Object)obj2;
+        // Convert a byte array to an Object
+        public static Object ByteArrayToObject(byte[] arrBytes)
+        {
+            if (arrBytes.Length < 2)
+            {
+                return null;
+            }
+            MemoryStream memStream = new MemoryStream();
+            BinaryFormatter binForm = new BinaryFormatter();
+            memStream.Write(arrBytes, 0, arrBytes.Length);
+            memStream.Seek(0, SeekOrigin.Begin);
+            Object obj2 = binForm.Deserialize(memStream);
+            Object obj = (Object)obj2;
 
-        return obj;
+            return obj;
+        }
     }
 }

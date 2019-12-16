@@ -12,28 +12,31 @@ using Android.Views;
 using Android.Widget;
 using Android.Views.InputMethods;
 using System.Timers;
-using static RoomClasses;
+using RoomClasses;
 using Android.Support.V7.App;
 using System.Threading.Tasks;
+using System.Threading;
+using Timer = System.Timers.Timer;
+using Newtonsoft.Json;
+using static RoomScheduling.refreshHandler;
+using Xamarin.Essentials;
 
 namespace RoomScheduling
 {
-    [Activity(Label = "RoomActivity")]
-    class RoomActivity : AppCompatActivity
+    [Activity(Theme = "@style/AppTheme")]
+    public class RoomActivity : AppCompatActivity, AppReceiver
     {
-        List<RoomUser> usersList;
+        public List<RoomUser> usersList;
         Button StartTimeInput;
         Button EndTimeInput;
         Button submit;
         EditText NameInput;
         int pos = -1;
-        Timer myTimer;
-        Socket sender = null;
-        RoomUserAdapter roomUserAdapter = null;
+        public RoomUserAdapter roomUserAdapter = null;
         ListView roomUsersLV;
         int roomId;
         ProgressDialog loadingDialog;
-        //
+        Intent service;
 
         async protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -42,75 +45,119 @@ namespace RoomScheduling
             // Create your application here
             SetContentView(Resource.Layout.room_main);
 
-            showLoadingScreen();
-            await Task.Run(() => RunOnUiThread(() =>
-            {
-                pos = Intent.GetIntExtra("pos", -1);
-                roomId = MainActivity.roomList[pos].Id;
+            MainActivity.showLoadingScreen(this, ref loadingDialog);
+            pos = Intent.GetIntExtra("pos", -1);
+            roomId = MainActivity.roomList[pos].Id;
+            TextView roomNameTV = FindViewById<TextView>(Resource.Id.roomName);
+            roomNameTV.Text = MainActivity.roomList[pos].roomName;
 
-                MainActivity.connectToServer(ref sender, MainActivity.IP, MainActivity.port);
-                GET_users();
-                roomUserAdapter = new RoomUserAdapter(this, usersList);
+            refreshHandler handler = new refreshHandler(this);
+
+            service = new Intent(this, typeof(refreshService));
+            handler = new refreshHandler(this);
+            service.PutExtra("handler", new Messenger(handler));
+            service.PutExtra("roomId", roomId);
+            StartService(service);
+
+
+            new Thread(new ThreadStart(delegate {
                 roomUsersLV = FindViewById<ListView>(Resource.Id.roomUsersLV);
-                roomUsersLV.Adapter = roomUserAdapter;
+                
 
                 StartTimeInput = FindViewById<Button>(Resource.Id.StartTimeInput);
                 EndTimeInput = FindViewById<Button>(Resource.Id.EndTimeInput);
                 StartTimeInput.Click += TimeSelectOnClick;
                 EndTimeInput.Click += TimeSelectOnClick;
 
-                NameInput = FindViewById<EditText>(Resource.Id.NameInput);
-
-
                 submit = FindViewById<Button>(Resource.Id.submit);
-                submit.Click += submitAction;
+                while (usersList == null)
+                {
+                    Thread.Sleep(100);
+                }
 
-                myTimer = new Timer();
-                myTimer.Elapsed += new ElapsedEventHandler(TimeUp);
-                myTimer.Interval = 10000;
-                myTimer.Start();
-            }));
-            loadingDialog.Hide();
-            loadingDialog.Dismiss();
+                RunOnUiThread(() => {
+                    submit.Click += submitAction;
+
+                    loadingDialog.Hide();
+                    loadingDialog.Dismiss();
+                });
+
+            })).Start();
         }
 
-        private void showLoadingScreen()
+        public int getRoomId()
         {
-            loadingDialog = ProgressDialog.Show(this, "just a sec", "Loading please wait...", true);
-            loadingDialog.SetCancelable(true);
-            loadingDialog.SetProgressStyle(ProgressDialogStyle.Horizontal);
+            return roomId;
+        }
 
-            loadingDialog.SetMessage("Loading...");
+        protected override void OnResume()
+        {
+            StartService(service);
+            base.OnResume();
+        }
+        public void updateRoomList(List<RoomUser> recevedRoomUserslist)
+        {
+            if (usersList != null)
+            {
+                if (usersList.Count!=recevedRoomUserslist.Count)
+                {
+                    foreach (RoomUser curr_user in recevedRoomUserslist)
+                    {
+                        if (!usersList.Contains(curr_user))
+                        {
+                            usersList.Add(curr_user);
+                        }
+                    }
+                    foreach (RoomUser curr_user in usersList.ToList())
+                    {
+                        if (!recevedRoomUserslist.Contains(curr_user))
+                        {
+                            usersList.Remove(curr_user);
+                        }
+                    }
+                    usersList.Sort((x, y) => TimeSpan.Compare(x.startTime.TimeOfDay, y.startTime.TimeOfDay));
+                    roomUserAdapter.updated();
+                }
+            }
+            else
+            {
+                usersList = recevedRoomUserslist;
+                roomUserAdapter = new RoomUserAdapter(this, usersList);
+                roomUsersLV.Adapter = roomUserAdapter;
 
-            loadingDialog.Show();
+            }
         }
 
         async private void submitAction(object sender, EventArgs e)
         {
-            String UserName = NameInput.Text;
+            String UserName = MainActivity.appUserName;
             String RoomName = MainActivity.roomList[pos].roomName;
             Socket secondSender = null;
-            MainActivity.connectToServer(ref secondSender, MainActivity.IP, MainActivity.port);
+            string toast = "";
+            MainActivity.showLoadingScreen(this, ref loadingDialog);
 
-            try
-            {
+            new Thread(new ThreadStart(delegate {
+                try
+                {
+                    MainActivity.connectToServer(ref secondSender, MainActivity.IP, MainActivity.port);
+                    // Connect Socket to the remote 
+                    // endpoint using method Connect() 
+                    MainActivity.sendString(secondSender, String.Format("Request {0} \"{1}\" {2} {3}", roomId, UserName, StartTimeInput.Text, EndTimeInput.Text));
+                    String recvedString = MainActivity.recvString(secondSender);
+                    toast = string.Format(recvedString);
+                    MainActivity.close_conn(secondSender);
+                }
+                catch (Exception er)
+                {
+                    toast = er.ToString();
+                }
+                RunOnUiThread(() => {
+                    loadingDialog.Hide();
+                    loadingDialog.Dismiss();
+                    Toast.MakeText(this, toast, ToastLength.Long).Show();
+                });
 
-                // Connect Socket to the remote 
-                // endpoint using method Connect() 
-                MainActivity.sendString(secondSender, String.Format("Request {0} \"{1}\" {2} {3}", roomId, UserName, StartTimeInput.Text, EndTimeInput.Text));
-                String recvedString = MainActivity.recvString(secondSender);
-                string toast = string.Format(recvedString);
-                Toast.MakeText(this, toast, ToastLength.Long).Show();
-                MainActivity.close_conn(secondSender);
-                GET_users();
-
-            }
-            catch (Exception error)
-            {
-                Toast.MakeText(this, error.ToString(), ToastLength.Long).Show(); 
-            }
-
-
+            })).Start();
         }
 
         void TimeSelectOnClick(object sender, EventArgs eventArgs)
@@ -124,48 +171,20 @@ namespace RoomScheduling
 
             frag.Show(FragmentManager, TimePickerFragment.TAG);
         }
-        public override bool OnTouchEvent(MotionEvent e)
-        {
-            InputMethodManager imm = (InputMethodManager)GetSystemService(Context.InputMethodService);
-            imm.HideSoftInputFromWindow(NameInput.WindowToken, 0);
-            return base.OnTouchEvent(e);
-        }
-        public void TimeUp(object source, ElapsedEventArgs e)
-        {
-            GET_users();
-        }
 
-        private void GET_users()
-        {
-
-            List<RoomUser> recevedRoomUserslist = (List<RoomUser>)MainActivity.GET(sender, "GET " + roomId.ToString() + "<EOF>");
-            if (usersList != null)
-            {
-                if (!Enumerable.SequenceEqual(usersList, recevedRoomUserslist))
-                {
-                    foreach (RoomUser curr_user in recevedRoomUserslist)
-                    {
-                        if (!usersList.Contains(curr_user))
-                        {
-                            usersList.Add(curr_user);
-                        }
-                    }
-                    roomUserAdapter.updated();
-                }
-                
-            }
-            else
-            {
-                usersList = recevedRoomUserslist;
-            }
-        }
         protected override void OnStop()
         {
-            myTimer.Stop();
-            MainActivity.close_conn(sender);
+            StopService(service);
             base.OnStop();
         }
+
+        public void onReceiveResult(Message message)
+        {
+            throw new NotImplementedException();
+        }
     }
+
+    [Obsolete]
     public class TimePickerFragment : DialogFragment, TimePickerDialog.IOnTimeSetListener
     {
         public static readonly string TAG = "MyTimePickerFragment";
